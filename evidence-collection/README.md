@@ -2,32 +2,38 @@
 
 ## Purpose
 
-Establishes what happened.
+Produce the authoritative record of execution.
 
-This bounded context creates independently verifiable execution evidence without relying on workload-generated logs.
+This bounded context independently records network activity and enforcement outcomes.
 
 ## Responsibilities
 
 - Packet capture
-- DNS event recording
-- Enforcement decision recording
-- Execution audit trail
+- Connection observations
+- DNS observations
+- Allow and deny records
+- Audit timelines
 - Artifact hashing
-- Manifest generation
-- Evidence integrity validation
+- Evidence manifests
+- Integrity verification
+
+## Produces
+
+- Observed Reachability
+- Evidence Package
+- Execution Audit Trail
 
 ## Does Not Own
 
-- Authorization decisions
-- Workload management
-- Policy creation
+- Authorization
+- Enforcement
+- Execution control
 
 ## Key Concepts
 
+- Observed Reachability
 - Packet Capture
 - Evidence Artifact
-- Decision Record
 - Audit Trail
 - Manifest
-- Hash
 - Verification

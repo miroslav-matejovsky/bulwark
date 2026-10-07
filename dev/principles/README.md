@@ -1,15 +1,15 @@
 # Architectural Principles
 
-## P1. Boundary-Enforced Control
+## P1. Boundary-Governed Control
 
-All network restrictions shall be enforced by an execution boundary independent of the workload.
+All network restrictions shall be enforced by Bulwark independently of workload implementation.
 
-The system shall not rely on applications, libraries, plugins, scanners, or subprocesses to enforce network scope. Replacing the workload with an arbitrary executable must not weaken policy enforcement.
+Workloads may declare intended network destinations, but only Bulwark determines and enforces the effective communication boundary. Replacing a workload with an arbitrary executable must not weaken enforcement.
 
 **Evaluation**
-- Is enforcement independent of workload cooperation?
-- Does the boundary remain effective if the workload is modified, replaced, or compromised?
-- Can network restrictions be bypassed without compromising the boundary itself?
+- Is enforcement independent of workload implementation?
+- Can a workload bypass or disable network restrictions?
+- Would enforcement remain effective if the workload were replaced or compromised?
 
 ---
 
@@ -17,12 +17,12 @@ The system shall not rely on applications, libraries, plugins, scanners, or subp
 
 Every security-relevant network action must be verifiable from independently collected evidence.
 
-Workload-generated logs are assertions. The authoritative record of execution shall be produced by the execution boundary and evidence systems.
+Workload-generated logs are assertions. The authoritative record of execution shall be produced by Bulwark and its evidence systems.
 
 **Evaluation**
-- Can an auditor reconstruct network activity without trusting the workload?
-- Are both permitted and denied actions independently recorded?
-- Does evidence originate from boundary-controlled sources rather than workload-controlled sources?
+- Can network activity be reconstructed without trusting the workload?
+- Are both allowed and denied actions independently recorded?
+- Does evidence originate from boundary-controlled sources?
 
 ---
 
@@ -30,25 +30,28 @@ Workload-generated logs are assertions. The authoritative record of execution sh
 
 Any loss of enforcement, observation, or policy validity shall reduce capability rather than reduce security.
 
-When uncertainty exists, the system shall stop execution, restrict execution, or deny network access rather than continue in a potentially uncontrolled state.
+When uncertainty exists, execution shall stop, network access shall be restricted, or the run shall be marked invalid rather than continue in an uncontrolled state.
 
 **Evaluation**
-- Does failure of any security-critical component prevent uncontrolled execution?
-- Can enforcement, observation, or policy components fail while network access continues?
+- Does failure of a security-critical component prevent uncontrolled communication?
+- Can enforcement or observation fail while execution continues unrestricted?
 - Is the secure state the default outcome of failure?
 
 ---
 
-## P4. Immutable Execution Policy
+## P4. Explicit Reachability
 
-Every execution shall operate under a complete, immutable, and attributable policy.
+Every network communication shall occur within an explicitly declared reachability scope.
 
-The policy governing an execution must be fully known before execution begins, remain unchanged for its duration, and be attributable after completion.
+Workloads are responsible for declaring the destinations they intend to reach. Bulwark is responsible for ensuring communication is limited to the declared scope and for producing evidence of actual reachability.
+
+The declared scope may evolve during execution as workload knowledge evolves, provided all additions are explicitly declared and become part of the recorded execution history.
 
 **Evaluation**
-- Can the exact policy that governed a run be identified afterwards?
-- Can policy change during execution?
-- Is every decision attributable to a specific policy version and rule set?
+- Is every observed destination covered by an explicit declaration?
+- Can a workload communicate with undeclared destinations?
+- Can declared and observed reachability be compared after execution?
+- Can the effective communication scope be reconstructed from execution evidence?
 
 ---
 
@@ -56,12 +59,12 @@ The policy governing an execution must be fully known before execution begins, r
 
 Components shall possess only the authority required for their responsibility, and no component shall simultaneously define policy, enforce policy, and produce evidence.
 
-Trustworthiness is achieved through separation of duties and minimization of privileges.
+Trustworthiness is achieved through clear separation between declaration, enforcement, observation, and workload execution.
 
 **Evaluation**
 - Does any component possess privileges beyond its responsibility?
 - Can a single component modify policy, enforcement, and evidence?
-- Are policy, enforcement, evidence, and workload responsibilities clearly separated?
+- Are declaration, enforcement, evidence, and workload responsibilities clearly separated?
 
 ---
 
@@ -69,10 +72,10 @@ Trustworthiness is achieved through separation of duties and minimization of pri
 
 A proposed change is acceptable only if it strengthens or preserves all five principles:
 
-1. Boundary-Enforced Control
+1. Boundary-Governed Control
 2. Evidence Over Assertion
 3. Fail Closed
-4. Immutable Execution Policy
+4. Explicit Reachability
 5. Least Privilege and Separation of Responsibility
 
 If a change violates any principle, it requires an explicit architectural exception and documented justification.

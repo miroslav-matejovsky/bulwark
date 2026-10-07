@@ -2,36 +2,43 @@
 
 ## Purpose
 
-Enforces policy.
+Enforces effective reachability.
 
-This bounded context provides the trusted network boundary through which all workload traffic must pass.
+This bounded context acts as the authoritative communication boundary for all workloads.
 
 ## Responsibilities
 
-- Network namespace lifecycle
-- Interface configuration
+- Network namespaces
+- Interfaces
 - Routing
-- Firewall enforcement
-- DNS enforcement
-- Protocol enforcement
-- Connection authorization decisions
-- Fail-closed execution control
+- Firewall policy
+- DNS controls
+- Protocol controls
+- Connection decisions
+- Boundary lifecycle
+
+## Consumes
+
+- Effective Reachability Scope
+
+## Produces
+
+- Allow Decisions
+- Deny Decisions
+- Boundary Events
 
 ## Does Not Own
 
-- Scope definition
-- Policy authoring
+- Reachability declaration
+- Workload logic
 - Evidence interpretation
-- Scanning logic
 
 ## Key Concepts
 
 - Boundary
 - Namespace
-- Interface
 - Route
 - Connection
-- Enforcement Rule
 - Allow Decision
 - Deny Decision
-- Boundary Lifecycle
+- Enforcement

@@ -1,41 +1,45 @@
-# Create bounded context folders with README.md descriptions
+# Replace top-level bounded contexts with the current Bulwark architecture
 
 $contexts = @{
-    "scope-policy" = @"
-# Scope Policy
+    "reachability-policy" = @"
+# Reachability Policy
 
 ## Purpose
 
-Defines what is authorized.
+Owns the definition of declared and effective reachability.
 
-This bounded context owns the language and rules of authorization, including engagement scope, target definitions, exclusions, allowed protocols, and policy compilation.
+This bounded context manages what workloads intend to reach and produces the effective communication scope enforced by Bulwark.
 
 ## Responsibilities
 
-- Define engagement scope
-- Define allowed targets and exclusions
-- Define domain and CIDR rules
-- Define protocol permissions
-- Produce immutable compiled policies
-- Produce policy identifiers and hashes
+- Reachability declarations
+- Domain declarations
+- Address declarations
+- Protocol declarations
+- Scope normalization
+- Effective scope generation
+- Scope revision history
+
+## Produces
+
+- Effective Reachability Scope
+- Scope Revisions
+- Declaration History
 
 ## Does Not Own
 
-- Network enforcement
+- Traffic enforcement
 - Process execution
-- Traffic capture
-- Evidence collection
+- Evidence generation
 
 ## Key Concepts
 
-- Engagement
-- Policy
-- Target
-- Exclusion
-- Domain Rule
-- CIDR Rule
-- Protocol Rule
-- Compiled Policy
+- Reachability Declaration
+- Effective Reachability
+- Domain
+- Address
+- Protocol
+- Scope Revision
 "@
 
     "execution-boundary" = @"
@@ -43,39 +47,46 @@ This bounded context owns the language and rules of authorization, including eng
 
 ## Purpose
 
-Enforces policy.
+Enforces effective reachability.
 
-This bounded context provides the trusted network boundary through which all workload traffic must pass.
+This bounded context acts as the authoritative communication boundary for all workloads.
 
 ## Responsibilities
 
-- Network namespace lifecycle
-- Interface configuration
+- Network namespaces
+- Interfaces
 - Routing
-- Firewall enforcement
-- DNS enforcement
-- Protocol enforcement
-- Connection authorization decisions
-- Fail-closed execution control
+- Firewall policy
+- DNS controls
+- Protocol controls
+- Connection decisions
+- Boundary lifecycle
+
+## Consumes
+
+- Effective Reachability Scope
+
+## Produces
+
+- Allow Decisions
+- Deny Decisions
+- Boundary Events
 
 ## Does Not Own
 
-- Scope definition
-- Policy authoring
+- Reachability declaration
+- Workload logic
 - Evidence interpretation
-- Scanning logic
 
 ## Key Concepts
 
 - Boundary
 - Namespace
-- Interface
 - Route
 - Connection
-- Enforcement Rule
 - Allow Decision
 - Deny Decision
-- Boundary Lifecycle
+- Enforcement
 "@
 
     "evidence-collection" = @"
@@ -83,34 +94,40 @@ This bounded context provides the trusted network boundary through which all wor
 
 ## Purpose
 
-Establishes what happened.
+Produce the authoritative record of execution.
 
-This bounded context creates independently verifiable execution evidence without relying on workload-generated logs.
+This bounded context independently records network activity and enforcement outcomes.
 
 ## Responsibilities
 
 - Packet capture
-- DNS event recording
-- Enforcement decision recording
-- Execution audit trail
+- Connection observations
+- DNS observations
+- Allow and deny records
+- Audit timelines
 - Artifact hashing
-- Manifest generation
-- Evidence integrity validation
+- Evidence manifests
+- Integrity verification
+
+## Produces
+
+- Observed Reachability
+- Evidence Package
+- Execution Audit Trail
 
 ## Does Not Own
 
-- Authorization decisions
-- Workload management
-- Policy creation
+- Authorization
+- Enforcement
+- Execution control
 
 ## Key Concepts
 
+- Observed Reachability
 - Packet Capture
 - Evidence Artifact
-- Decision Record
 - Audit Trail
 - Manifest
-- Hash
 - Verification
 "@
 
@@ -119,42 +136,64 @@ This bounded context creates independently verifiable execution evidence without
 
 ## Purpose
 
-Manages execution of workloads.
+Manage workload execution.
 
-This bounded context schedules, launches, monitors, and collects results from tools executing inside execution boundaries.
+This bounded context coordinates tools and workloads that operate within Bulwark boundaries.
 
 ## Responsibilities
 
-- Workload selection
-- Tool execution
+- Job planning
 - Worker lifecycle
-- Target allocation
-- Invocation planning
+- Tool execution
+- Invocation management
 - Result collection
+- Reachability declarations
+
+## Produces
+
+- Workload Invocations
+- Execution Requests
+- Reachability Declarations
 
 ## Does Not Own
 
-- Network authorization
-- Firewall enforcement
+- Traffic authorization
+- Enforcement decisions
 - Evidence generation
-- Policy definition
 
 ## Key Concepts
 
 - Workload
 - Tool
-- Worker
-- Invocation
 - Job
-- Execution Plan
-- Result
+- Invocation
+- Worker
+- Declaration
 "@
 }
 
-foreach ($name in $contexts.Keys) {
-    New-Item -ItemType Directory -Path $name -Force | Out-Null
-    Set-Content -Path (Join-Path $name "README.md") -Value $contexts[$name] -Encoding UTF8
+# Remove old top-level bounded context folders if present
+$oldContexts = @(
+    "scope-policy"
+)
+
+foreach ($folder in $oldContexts) {
+    if (Test-Path $folder) {
+        Remove-Item $folder -Recurse -Force
+    }
 }
 
-Write-Host "Created:"
-$contexts.Keys | Sort-Object | ForEach-Object { Write-Host " - $_" }
+# Create/update current bounded contexts
+foreach ($name in $contexts.Keys) {
+    New-Item -ItemType Directory -Path $name -Force | Out-Null
+    Set-Content `
+        -Path (Join-Path $name "README.md") `
+        -Value $contexts[$name] `
+        -Encoding UTF8
+}
+
+Write-Host ""
+Write-Host "Bulwark bounded contexts initialized:"
+$contexts.Keys | Sort-Object | ForEach-Object {
+    Write-Host " - $_"
+}

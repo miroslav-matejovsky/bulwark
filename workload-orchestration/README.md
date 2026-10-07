@@ -2,32 +2,36 @@
 
 ## Purpose
 
-Manages execution of workloads.
+Manage workload execution.
 
-This bounded context schedules, launches, monitors, and collects results from tools executing inside execution boundaries.
+This bounded context coordinates tools and workloads that operate within Bulwark boundaries.
 
 ## Responsibilities
 
-- Workload selection
-- Tool execution
+- Job planning
 - Worker lifecycle
-- Target allocation
-- Invocation planning
+- Tool execution
+- Invocation management
 - Result collection
+- Reachability declarations
+
+## Produces
+
+- Workload Invocations
+- Execution Requests
+- Reachability Declarations
 
 ## Does Not Own
 
-- Network authorization
-- Firewall enforcement
+- Traffic authorization
+- Enforcement decisions
 - Evidence generation
-- Policy definition
 
 ## Key Concepts
 
 - Workload
 - Tool
-- Worker
-- Invocation
 - Job
-- Execution Plan
-- Result
+- Invocation
+- Worker
+- Declaration

@@ -2,14 +2,14 @@
 
 ## Purpose
 
-The system provides controlled execution of network-capable workloads under an immutable scope policy while producing independently verifiable evidence of all network activity and enforcement decisions.
+Bulwark provides controlled execution of network-capable workloads while ensuring that all network communication remains within explicitly declared reachability and that independently verifiable evidence is produced for every execution.
 
 The architecture is built around five principles:
 
-1. Boundary-Enforced Control
+1. Boundary-Governed Control
 2. Evidence Over Assertion
 3. Fail Closed
-4. Immutable Execution Policy
+4. Explicit Reachability
 5. Least Privilege and Separation of Responsibility
 
 ---
@@ -17,118 +17,137 @@ The architecture is built around five principles:
 # Context Overview
 
 ```text
-                    ┌────────────────────┐
-                    │    Scope Policy    │
-                    └─────────┬──────────┘
-                              │
-                    Compiled Policy
-                              │
-                              ▼
-                   ┌─────────────────────┐
-                   │ Execution Boundary  │
-                   └───────┬───────┬─────┘
-                           │       │
-                    Events │       │ Traffic
-                           │       │
-                           ▼       ▼
-                 ┌──────────────────────┐
-                 │ Evidence Collection  │
-                 └──────────────────────┘
-
-                           ▲
+                 ┌─────────────────────┐
+                 │    Reachability     │
+                 │      Policy         │
+                 └─────────┬───────────┘
                            │
-                           │ Invocation
-                           │
-                 ┌──────────────────────┐
-                 │ Workload             │
-                 │ Orchestration        │
-                 └──────────────────────┘
+                           │ Effective Scope
+                           ▼
+                 ┌─────────────────────┐
+                 │ Execution Boundary  │
+                 └───────┬───────┬─────┘
+                         │       │
+                  Events │       │ Traffic
+                         │       │
+                         ▼       ▼
+               ┌──────────────────────┐
+               │ Evidence Collection  │
+               └──────────────────────┘
+                         ▲
+                         │
+                         │ Reachability
+                         │ Declarations
+                         │
+               ┌──────────────────────┐
+               │ Workload             │
+               │ Orchestration        │
+               └──────────────────────┘
 ```
+
+---
+
+# Core Domain Model
+
+Bulwark operates on three fundamental concepts:
+
+```text
+Declared Reachability
+        ↓
+Enforced Reachability
+        ↓
+Observed Reachability
+```
+
+The workload declares where it intends to communicate.
+
+Bulwark enforces those declarations.
+
+The evidence system records what actually occurred.
+
+The system's primary responsibility is maintaining the relationship between these three views.
 
 ---
 
 # Bounded Contexts
 
-## Scope Policy
+## reachability-policy
 
 ### Responsibility
 
-Define what is authorized.
+Own the definition of declared and effective reachability.
 
 ### Owns
 
-- Engagement definitions
-- Allowed targets
-- Excluded targets
-- CIDR rules
-- Domain rules
-- Protocol rules
-- Policy compilation
-- Policy versioning
+- Reachability declarations
+- Scope definitions
+- Domain declarations
+- Address declarations
+- Protocol declarations
+- Scope normalization
+- Effective scope generation
+- Scope revision history
 
 ### Produces
 
 ```text
-Compiled Policy
-Policy Identifier
-Policy Hash
-Policy Manifest
+Effective Reachability Scope
+Scope Revisions
+Declaration History
 ```
 
 ### Does Not Own
 
 ```text
-Execution
-Enforcement
-Traffic Capture
-Evidence Collection
+Traffic Enforcement
+Process Execution
+Evidence Generation
 ```
 
 ---
 
-## Execution Boundary
+## execution-boundary
 
 ### Responsibility
 
-Enforce policy for all workload network activity.
+Enforce effective reachability.
 
 ### Owns
 
-- Network namespace lifecycle
-- Virtual interfaces
+- Network namespaces
+- Interfaces
 - Routing
-- Firewall rules
-- DNS control
-- Protocol gates
-- Allow / deny decisions
-- Fail-closed execution lifecycle
+- Firewall policy
+- DNS controls
+- Protocol controls
+- Connection decisions
+- Boundary lifecycle
 
 ### Consumes
 
 ```text
-Compiled Policy
+Effective Reachability Scope
 ```
 
 ### Produces
 
 ```text
-Connection Decisions
+Allow Decisions
+Deny Decisions
 Boundary Events
-Enforcement Events
 ```
 
 ### Does Not Own
 
 ```text
-Policy Authoring
-Reporting
-Scanning Logic
+Reachability Declaration
+Workload Logic
 Evidence Interpretation
 ```
 
 ---
 
-## Evidence Collection
+## evidence-collection
 
 ### Responsibility
 
@@ -138,66 +157,59 @@ Produce the authoritative record of execution.
 
 - Packet capture
 - DNS observations
-- Enforcement decisions
-- Audit records
+- Connection observations
+- Allow / deny records
 - Evidence manifests
 - Artifact hashing
-- Integrity validation
+- Audit timelines
+- Integrity verification
 
 ### Produces
 
 ```text
+Observed Reachability
 Evidence Package
-Evidence Manifest
-Integrity Hashes
-Audit Timeline
+Execution Audit Trail
 ```
 
 ### Does Not Own
 
 ```text
 Authorization
-Execution
-Policy Decisions
+Enforcement
+Execution Control
 ```
 
 ---
 
-## Workload Orchestration
+## workload-orchestration
 
 ### Responsibility
 
-Execute and coordinate workloads.
+Manage workload execution.
 
 ### Owns
 
-- Tool selection
 - Job planning
 - Worker lifecycle
+- Tool execution
 - Invocation management
-- Target assignment
 - Result collection
-
-### Consumes
-
-```text
-Compiled Policy
-Execution Boundary Service
-```
+- Reachability declarations
 
 ### Produces
 
 ```text
-Invocations
+Workload Invocations
+Reachability Declarations
 Execution Requests
-Tool Results
 ```
 
 ### Does Not Own
 
 ```text
-Network Authorization
-Firewall Rules
+Enforcement Decisions
+Traffic Authorization
 Evidence Generation
 ```
 
@@ -206,44 +218,92 @@ Evidence Generation
 # Execution Flow
 
 ```text
-1. Define Engagement
-        │
-        ▼
+1. Workload starts
 
-2. Build Compiled Policy
-        │
-        ▼
+2. Workload declares intended reachability
 
-3. Create Execution Boundary
-        │
-        ▼
+3. Reachability Policy updates effective scope
 
-4. Start Evidence Collection
-        │
-        ▼
+4. Execution Boundary applies effective scope
 
-5. Validate Boundary Health
-        │
-        ▼
+5. Workload communicates
 
-6. Execute Workload
-        │
-        ▼
+6. Execution Boundary enforces scope
 
-7. Enforce Network Decisions
-        │
-        ▼
+7. Evidence Collection records activity
 
-8. Record Evidence
-        │
-        ▼
+8. Workload may declare additional reachability
 
-9. Terminate Workload
-        │
-        ▼
+9. Effective scope is updated
 
-10. Finalize Evidence Package
+10. Execution continues
+
+11. Evidence package is finalized
 ```
+
+---
+
+# Communication Model
+
+## Declaration Channel
+
+Used by workloads to declare intended communication.
+
+```text
+Workload
+    →
+Reachability Policy
+```
+
+Examples:
+
+```text
+github.com
+api.github.com
+203.0.113.10
+TCP/443
+UDP/53
+```
+
+A declaration does not authorize communication by itself.
+
+It only defines intended reachability.
+
+---
+
+## Enforcement Channel
+
+Used by Bulwark to constrain actual communication.
+
+```text
+Reachability Policy
+        →
+Execution Boundary
+```
+
+Only destinations within the effective scope may be reached.
+
+All undeclared communication is denied.
+
+---
+
+## Evidence Channel
+
+Used to produce independently verifiable records.
+
+```text
+Execution Boundary
+        →
+Evidence Collection
+```
+
+Evidence must allow reconstruction of:
+
+- Declared reachability
+- Effective reachability
+- Observed reachability
+- Enforcement decisions
+- Boundary lifecycle events
 
 ---
 
@@ -251,56 +311,224 @@ Evidence Generation
 
 ## Rule 1
 
-All network communication must cross the Execution Boundary.
-
-No workload may communicate directly with external networks.
+All external communication must traverse the execution boundary.
 
 ---
 
 ## Rule 2
 
-Authorization decisions originate exclusively from Scope Policy.
-
-Execution Boundary enforces policy but does not create policy.
+The workload may declare reachability but cannot bypass enforcement.
 
 ---
 
 ## Rule 3
 
-Evidence Collection observes and records but never authorizes.
+Every observed destination must either:
 
-Evidence must remain independent from workload-generated logs.
+- match declared reachability, or
+- be denied and recorded.
 
 ---
 
 ## Rule 4
 
-Workload Orchestration manages execution but cannot bypass enforcement.
-
-Replacing a workload with an arbitrary executable must not weaken controls.
+Evidence must be generated independently from workload logs.
 
 ---
 
 ## Rule 5
 
-Failure of policy, enforcement, or evidence systems terminates execution or removes network capability.
-
-The system always fails closed.
+Security-critical failures terminate execution or remove communication capability.
 
 ---
 
-# Primary Architectural Dependency Chain
+## Rule 6
+
+Declared, effective, and observed reachability must remain reconstructable after execution.
+
+---
+
+# Trust Model
+
+The trusted system consists of:
 
 ```text
-Scope Policy
-      │
-      ▼
+Reachability Policy
+        │
+        ▼
 Execution Boundary
-      │
-      ▼
+        │
+        ▼
 Evidence Collection
 ```
 
-This chain constitutes the trust boundary of the system.
+Workloads are trusted to declare intended communication.
 
-Workload Orchestration and executed tools are considered replaceable consumers of that trust boundary rather than part of it.
+However, workloads are not trusted to enforce, validate, or prove compliance with those declarations.
+
+Bulwark remains the authority for enforcement and evidence generation.
+
+---
+
+# Primary Architectural Question
+
+For any network communication, the system must be able to answer:
+
+```text
+Was this destination declared?
+
+Was it permitted?
+
+Was it reached?
+
+Where is the evidence?
+```
+
+The architecture exists to provide deterministic answers to those four questions.
+
+---
+
+# Core Relationship
+
+```text
+Declared Reachability
+        ↓
+Effective Reachability
+        ↓
+Observed Reachability
+```
+
+The workload declares what it intends to reach.
+
+Bulwark determines and enforces the effective communication boundary.
+
+The evidence system records what was actually reached.
+
+All architectural decisions should preserve the relationship between declared, effective, and observed reachability.
+
+---
+
+# Trust Boundaries
+
+## Workload
+
+Trusted to:
+
+- perform its intended task
+- declare intended reachability
+- adapt declarations as new targets are discovered
+
+Not trusted to:
+
+- enforce restrictions
+- validate compliance
+- produce authoritative evidence
+
+---
+
+## Bulwark
+
+Trusted to:
+
+- maintain effective reachability
+- enforce communication boundaries
+- deny undeclared communication
+- record enforcement decisions
+- fail closed when uncertainty exists
+
+Bulwark is the authority for network control.
+
+---
+
+## Evidence Collection
+
+Trusted to:
+
+- observe execution
+- record network activity
+- record enforcement outcomes
+- preserve execution history
+- support independent verification
+
+Evidence Collection is the authority for what happened.
+
+---
+
+# Architectural Invariants
+
+The following statements must remain true regardless of implementation details.
+
+### Invariant 1
+
+All external communication traverses the Execution Boundary.
+
+### Invariant 2
+
+No workload can communicate outside the effective reachability enforced by Bulwark.
+
+### Invariant 3
+
+Every observed communication is either:
+
+- explicitly declared and permitted, or
+- denied and recorded.
+
+### Invariant 4
+
+Evidence is generated independently of workload-controlled logging.
+
+### Invariant 5
+
+Loss of enforcement or observation never results in uncontrolled communication.
+
+### Invariant 6
+
+Declared, effective, and observed reachability remain reconstructable after execution.
+
+---
+
+# System Responsibilities
+
+```text
+Workload
+    →
+Declare Reachability
+
+Reachability Policy
+    →
+Maintain Effective Scope
+
+Execution Boundary
+    →
+Enforce Effective Scope
+
+Evidence Collection
+    →
+Record What Happened
+```
+
+Each responsibility belongs to a single bounded context.
+
+No component should simultaneously:
+
+- declare reachability,
+- enforce reachability,
+- and authoritatively record reachability.
+
+---
+
+# Architectural Test
+
+A proposed change is acceptable only if it preserves the ability to determine:
+
+```text
+What did the workload intend to reach?
+
+What was it allowed to reach?
+
+What did it actually reach?
+
+How do we prove it?
+```
+
+If any architectural change weakens the ability to answer these questions, the change should be rejected or require an explicit exception.
